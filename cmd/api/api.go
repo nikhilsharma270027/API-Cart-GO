@@ -2,9 +2,11 @@ package api
 
 import (
 	"database/sql"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/nikhilsharma270027/API-Cart-GO/service/user"
 )
 
 type APIServer struct {
@@ -26,7 +28,19 @@ func (s *APIServer) Run() error {
 	// router := http.NewServeMux()
 	router := mux.NewRouter()
 	subrouter := router.PathPrefix("api/v1").Subrouter()
-	subrouter := router.
-	
+
+	// userService
+	userHanlder := user.NewHandler()
+	userHanlder.RegisterRoutes(subrouter) // add subrouter now /api/vi/login
+
+	log.Println("Listening on", s.addr)
+
 	return http.ListenAndServe(s.addr, router)
 }
+
+// You have an API with routes like:
+
+// /api/v1/users
+// /api/v1/products
+// /api/v1/orders
+// Instead of defining the prefix (/api/v1) repeatedly for every route, you can use PathPrefix("api/v1") to group them.

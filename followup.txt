@@ -1,0 +1,12 @@
+go .mod
+
+cmd folder -> api and migrate folder
+    api -> api.go
+    migrate -> 
+
+    main.go (server folder) 
+
+
+service folder  
+    user contains user routes
+        -> routes.go
