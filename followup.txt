@@ -10,3 +10,6 @@ cmd folder -> api and migrate folder
 service folder  
     user contains user routes
         -> routes.go
+
+    auth (contains hashing )
+        password.go    

@@ -30,8 +30,9 @@ func (s *APIServer) Run() error {
 	subrouter := router.PathPrefix("api/v1").Subrouter()
 
 	// userService
-	userHanlder := user.NewHandler()
-	userHanlder.RegisterRoutes(subrouter) // add subrouter now /api/vi/login
+	userStore := user.NewStore(s.db)
+	userHanlder := user.NewHandler(userStore) // adding user store from store.go
+	userHanlder.RegisterRoutes(subrouter)     // add subrouter now /api/vi/login
 
 	log.Println("Listening on", s.addr)
 

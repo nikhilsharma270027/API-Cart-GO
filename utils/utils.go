@@ -6,6 +6,8 @@ import (
 	"net/http"
 )
 
+func validate = validator
+
 func ParseJSON(r *http.Request, payload any) error {
 	// get jSON payload
 	if r.Body == nil {
