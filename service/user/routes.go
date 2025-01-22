@@ -1,8 +1,10 @@
 package user
 
 import (
+	"fmt"
 	"net/http"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 	"github.com/nikhilsharma270027/API-Cart-GO/service/auth"
 	"github.com/nikhilsharma270027/API-Cart-GO/types"
@@ -34,6 +36,14 @@ func (h *Handler) handlerRegister(w http.ResponseWriter, r *http.Request) {
 
 	if err := utils.ParseJSON(r, &payload); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	// validate payload
+	if err := utils.Validate.Struct(payload); err != nil {
+		errors := err.(validator.ValidationErrors)
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid palyload %v", errors))
+		return
 	}
 	// check if the user exists
 	_, err := h.store.GetUserByEmail(payload.Email)
