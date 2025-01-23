@@ -27,7 +27,7 @@ func (s *APIServer) Run() error {
 	// router gorilla mux
 	// router := http.NewServeMux()
 	router := mux.NewRouter()
-	subrouter := router.PathPrefix("api/v1").Subrouter()
+	subrouter := router.PathPrefix("/api/v1").Subrouter()
 
 	// userService
 	userStore := user.NewStore(s.db)

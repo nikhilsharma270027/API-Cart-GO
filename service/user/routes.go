@@ -27,7 +27,20 @@ func (h *Handler) RegisterRoutes(router *mux.Router) {
 // we need to json payload and implement jwt
 
 func (h *Handler) handlerLogin(w http.ResponseWriter, r *http.Request) {
+	// get jSON payload
+	var payload types.RegisterUserPayload
 
+	if err := utils.ParseJSON(r, &payload); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	// validate payload
+	if err := utils.Validate.Struct(payload); err != nil {
+		errors := err.(validator.ValidationErrors)
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid palyload %v", errors))
+		return
+	}
 }
 
 func (h *Handler) handlerRegister(w http.ResponseWriter, r *http.Request) {
@@ -48,7 +61,7 @@ func (h *Handler) handlerRegister(w http.ResponseWriter, r *http.Request) {
 	// check if the user exists
 	_, err := h.store.GetUserByEmail(payload.Email)
 	if err == nil {
-		utils.WriteError(w, http.StatusBadRequest, err)
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("user with email %s already exists", payload.Email))
 		return
 	}
 
@@ -56,6 +69,7 @@ func (h *Handler) handlerRegister(w http.ResponseWriter, r *http.Request) {
 	hashedPassword, err := auth.HashPassword(payload.Password)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
 	}
 	// if it doesnt we create the new user
 	// we gonna create it using
