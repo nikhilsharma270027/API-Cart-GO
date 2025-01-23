@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
+	"github.com/nikhilsharma270027/API-Cart-GO/config"
 	"github.com/nikhilsharma270027/API-Cart-GO/service/auth"
 	"github.com/nikhilsharma270027/API-Cart-GO/types"
 	"github.com/nikhilsharma270027/API-Cart-GO/utils"
@@ -28,7 +29,7 @@ func (h *Handler) RegisterRoutes(router *mux.Router) {
 
 func (h *Handler) handlerLogin(w http.ResponseWriter, r *http.Request) {
 	// get jSON payload
-	var payload types.RegisterUserPayload
+	var payload types.LoginUserPayload
 
 	if err := utils.ParseJSON(r, &payload); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)
@@ -41,6 +42,31 @@ func (h *Handler) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid palyload %v", errors))
 		return
 	}
+
+	// define user/ we gonna find using email
+	u, err := h.store.GetUserByEmail(payload.Email)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("Not found, invalid email or password"))
+		return
+	}
+
+	if !auth.ComparePasswords(u.Password, []byte(payload.Password)) {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("not found, invalid email or password"))
+		return
+	}
+
+	//after we create jwt
+	secret := []byte(config.Envs.JWTSecret)
+	token, err := auth.CreateJWT(secret, u.ID)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	// we will create jwt auth
+	// when the passwords match we send the jwt token in return
+	utils.WriteJSon(w, http.StatusOK, map[string]string{"token": token})
+
 }
 
 func (h *Handler) handlerRegister(w http.ResponseWriter, r *http.Request) {
