@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/nikhilsharma270027/API-Cart-GO/service/product"
 	"github.com/nikhilsharma270027/API-Cart-GO/service/user"
 )
 
@@ -33,6 +34,11 @@ func (s *APIServer) Run() error {
 	userStore := user.NewStore(s.db)
 	userHanlder := user.NewHandler(userStore) // adding user store from store.go
 	userHanlder.RegisterRoutes(subrouter)     // add subrouter now /api/vi/login
+
+	//Product service
+	productStore := product.NewStore(s.db)
+	productHandler := product.NewHandler(productStore)
+	productHandler.RegisterRoutes(subrouter)
 
 	log.Println("Listening on", s.addr)
 
