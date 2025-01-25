@@ -1,12 +1,22 @@
 package auth
 
 import (
+	"context"
+	"fmt"
+	"log"
+	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/nikhilsharma270027/API-Cart-GO/config"
+	"github.com/nikhilsharma270027/API-Cart-GO/types"
+	"github.com/nikhilsharma270027/API-Cart-GO/utils"
 )
+
+type contextKey string
+
+const UserKey contextKey = "userID"
 
 func CreateJWT(secret []byte, userID int) (string, error) {
 	expiration := time.Second * time.Duration(config.Envs.JWTExpirationInSeconds)
@@ -14,7 +24,7 @@ func CreateJWT(secret []byte, userID int) (string, error) {
 	//NewWithClaims creates a new [Token] with the specified signing method and claims.
 	//Additional options can be specified, but are currently unused.
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userID":    strconv.Itoa(userID),
+		"userID":    strconv.Itoa(int(userID)),
 		"expiredAt": time.Now().Add(expiration).Unix(),
 	})
 
@@ -25,4 +35,86 @@ func CreateJWT(secret []byte, userID int) (string, error) {
 	}
 
 	return tokenString, nil
+}
+
+// to use on routes
+func WithJWTAuth(handlerFunc http.HandlerFunc, store types.UserStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// get the token from user request
+		tokenString := getTokenFromRequest(r)
+
+		// validate the jwt
+		token, err := validateJWT(tokenString)
+		if err != nil {
+			log.Printf("failed to validate token: %v", err)
+			permissionDenied(w)
+			return
+		}
+
+		if !token.Valid {
+			log.Println("invalid token")
+			permissionDenied(w)
+			return
+		}
+
+		// if it is we need to fetch the userID from the DB(id from the token)
+		claims := token.Claims.(jwt.MapClaims)
+		str := claims["userID"].(string)
+
+		userID, err := strconv.Atoi(str)
+		if err != nil {
+			log.Printf("failed to convert userID to int: %v", err)
+			permissionDenied(w)
+			return
+		}
+
+		u, err := store.GetUserByID(userID)
+		if err != nil {
+			log.Printf("failed to get user by id: %v", err)
+			permissionDenied(w)
+			return
+		}
+		// set context "userID" to the user ID
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, UserKey, u.ID)
+		r = r.WithContext(ctx)
+
+		// Call the function if the token is valid
+		handlerFunc(w, r)
+	}
+}
+
+// helper func for WithJWTAuth
+func getTokenFromRequest(r *http.Request) string {
+	token := r.Header.Get("Authorization")
+
+	if token != "" {
+		return token
+	}
+
+	return ""
+}
+
+// helper validation for WithJWTAuth
+func validateJWT(tokenString string) (*jwt.Token, error) {
+	return jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+
+		return []byte(config.Envs.JWTSecret), nil
+	})
+}
+
+func permissionDenied(w http.ResponseWriter) {
+	utils.WriteError(w, http.StatusForbidden, fmt.Errorf("permission denied"))
+}
+
+func GetUserIDFromContext(ctx context.Context) int {
+	userID, ok := ctx.Value(UserKey).(int)
+	if !ok {
+		return -1
+	}
+
+	return userID
 }

@@ -9,17 +9,25 @@ type UserStore interface {
 }
 
 type ProductStore interface {
-	GetProducts() ([]Product, error)
-	GetProductsByIDs(ps []int) ([]Product, error)
+	GetProductByID(id int) (*Product, error)
+	GetProductsByID(ids []int) ([]Product, error)
+	GetProducts() ([]*Product, error)
+	CreateProduct(CreateProductPayload) error
+	UpdateProduct(Product) error
 }
 
-func (p ProductStore) GetProductsByID(productIds []int) (any, error) {
-	panic("unimplemented")
+type OrderStore interface {
+	CreateOrder(Order) (int, error)
+	CreateOrderItem(OrderItem) error
 }
 
-func (p ProductStore) GetProductsByID(productIds []int) (any, error) {
-	panic("unimplemented")
-}
+// func (p ProductStore) GetProductsByID(productIds []int) (any, error) {
+// 	panic("unimplemented")
+// }
+
+// func (p ProductStore) GetProductsByID(productIds []int) (any, error) {
+// 	panic("unimplemented")
+// }
 
 // func (p ProductStore) CreateProduct(param any) any {
 // 	panic("unimplemented")
@@ -62,11 +70,6 @@ type OrderItem struct {
 	Quantity  int       `json:"quantity"`
 	Price     float64   `json:"price"`
 	CreatedAt time.Time `json:"createdAt"`
-}
-
-type OrderStore interface {
-	CreateOrder(Order) (int, error)
-	CreateOrderItem(OrderItem) error
 }
 
 type CreateProductPayload struct {

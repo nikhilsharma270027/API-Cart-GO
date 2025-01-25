@@ -1,0 +1,12 @@
+POST http://localhost:8080/api/v1/cart
+Content-Type: application/json 
+Authorization: Bearer "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVkQXQiOjE3Mzg0MjE3ODYsInVzZXJJRCI6IjEifQ.dh0RwnT9Y9evuTkJ-h2Ydy20z0O2sY7bPBuh5HvbMLM"
+
+{
+    "items": [
+        {
+            "productID": 1,
+            "quantity": 1
+        }
+    ]
+}

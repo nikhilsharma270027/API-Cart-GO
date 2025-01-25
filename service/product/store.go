@@ -62,20 +62,20 @@ func (s *Store) GetProductsByID(productIDs []int) ([]types.Product, error) {
 
 }
 
-func (s *Store) GetProducts() ([]types.Product, error) {
+func (s *Store) GetProducts() ([]*types.Product, error) {
 	rows, err := s.db.Query("SELECT * FROM products")
 	if err != nil {
 		return nil, err
 	}
 
-	products := make([]types.Product, 0)
+	products := make([]*types.Product, 0)
 	for rows.Next() {
 		p, err := scanRowsIntoProduct(rows)
 		if err != nil {
 			return nil, err
 		}
 
-		products = append(products, *p)
+		products = append(products, p)
 	}
 
 	return products, nil

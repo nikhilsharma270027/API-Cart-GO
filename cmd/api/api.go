@@ -6,8 +6,11 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/nikhilsharma270027/API-Cart-GO/service/cart"
+	"github.com/nikhilsharma270027/API-Cart-GO/service/order"
 	"github.com/nikhilsharma270027/API-Cart-GO/service/product"
 	"github.com/nikhilsharma270027/API-Cart-GO/service/user"
+	"github.com/rs/cors"
 )
 
 type APIServer struct {
@@ -37,12 +40,28 @@ func (s *APIServer) Run() error {
 
 	//Product service
 	productStore := product.NewStore(s.db)
-	productHandler := product.NewHandler(productStore)
+	productHandler := product.NewHandler(productStore, userStore)
 	productHandler.RegisterRoutes(subrouter)
+
+	orderStore := order.NewStore(s.db)
+
+	cartHandler := cart.NewHandler(productStore, orderStore, userStore)
+	cartHandler.RegisterRoutes(subrouter)
+
+	// Configure CORS
+	corsMiddleware := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:3000", "http://example.com"}, // Replace with your frontend domains
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Authorization", "Content-Type"},
+		AllowCredentials: true,
+	})
+
+	// Wrap the router with CORS middleware
+	handler := corsMiddleware.Handler(router)
 
 	log.Println("Listening on", s.addr)
 
-	return http.ListenAndServe(s.addr, router)
+	return http.ListenAndServe(s.addr, handler)
 }
 
 // You have an API with routes like:
